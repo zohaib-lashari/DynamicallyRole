@@ -8,50 +8,43 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
-
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-
-builder.Services.AddDbContext<ApplicationDbContext>(opt => opt.UseSqlServer(connectionString));
-
-builder.Services.AddIdentity<IdentityUser,IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+	options.UseSqlServer(connectionString));
 
 
+builder.Services.ConfigureApplicationCookie(options =>
+    options.AccessDeniedPath = new PathString("/Account/NoAccess"));
 
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+	options.SignIn.RequireConfirmedAccount = false)
+	.AddEntityFrameworkStores<ApplicationDbContext>()
+	.AddDefaultTokenProviders();
 
-builder.Services.AddDynamicAuthorization<ApplicationDbContext>(opt => opt.DefaultAdminUser = null).AddSqlServerStore(options => options.ConnectionString = connectionString)
+builder.Services.AddDynamicAuthorization<ApplicationDbContext>(options =>
+	options.DefaultAdminUser = "UserName")
+	.AddSqlServerStore(options => options.ConnectionString = connectionString)
 	.AddUi(builder.Services.AddControllersWithViews());
 
-builder.Services.AddScoped<IDbInit, DbInit>();
+/*builder.Services.AddScoped<IDbInit, DbInit>();*/
 
 var app = builder.Build();
 
-
-
-
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
 	app.UseExceptionHandler("/Home/Error");
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 	app.UseHsts();
 }
-
-app.Use(async (context, next) =>
-{
-	await RoleSeedAsync(app);  // This will run on every request
-	await next.Invoke();  // Proceed to the next middleware
-});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -60,7 +53,7 @@ app.MapControllerRoute(
 
 app.Run();
 
- async Task RoleSeedAsync(WebApplication app)
+/*async Task RoleSeedAsync(WebApplication app)
 {
 	using (var scope = app.Services.CreateScope())
 	{
@@ -68,3 +61,4 @@ app.Run();
 		await dbRop.RoleSeed();
 	}
 }
+*/

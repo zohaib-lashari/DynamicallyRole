@@ -1,10 +1,12 @@
 ﻿using DynamicallyRole.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace DynamicallyRole.Controllers
 {
+	[Authorize]
 	public class AccountController : Controller
 	{
 		private readonly UserManager<IdentityUser> _userManager;
@@ -18,18 +20,23 @@ namespace DynamicallyRole.Controllers
 			_roleManager = roleManager;
         }
 
+		[AllowAnonymous]
         public IActionResult Login()
 		{
 			return View();
 		}
-
+		[AllowAnonymous]
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginViewModel model)
 		{
 			if (ModelState.IsValid)
 			{
+				
 				await _signInManager.PasswordSignInAsync(model.username, model.Password, model.RememberMe,lockoutOnFailure:false);
+
+				
+
 				return RedirectToAction("Index","Home");
 			}
 			return View(model);
@@ -84,5 +91,23 @@ namespace DynamicallyRole.Controllers
 			}
 			return RedirectToAction("Reg");
 		}
-	}
+
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> LogOff()
+		{
+			await _signInManager.SignOutAsync();
+			return RedirectToAction("Login");
+		}
+
+
+		[AllowAnonymous]
+        public IActionResult NoAccess()
+        {
+            return View();
+        }
+
+
+    }
 }

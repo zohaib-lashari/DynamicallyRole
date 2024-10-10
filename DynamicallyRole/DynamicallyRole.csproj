@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Home\_LoginPartialCustom.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DynamicAuthorization.Mvc.Core" Version="1.2.2" />
     <PackageReference Include="DynamicAuthorization.Mvc.MsSqlServerStore" Version="1.2.2" />
     <PackageReference Include="DynamicAuthorization.Mvc.Ui" Version="1.2.3" />
@@ -17,6 +21,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Views\Home\_LoginPartialCustom.cshtml" />
   </ItemGroup>
 
 </Project>
