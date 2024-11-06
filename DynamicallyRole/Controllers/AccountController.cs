@@ -1,7 +1,11 @@
-﻿using DynamicallyRole.Models;
+﻿using DynamicallyRole.Data;
+using DynamicallyRole.Models;
+using DynamicallyRole.Models.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Security.Claims;
 
 namespace DynamicallyRole.Controllers
@@ -12,12 +16,16 @@ namespace DynamicallyRole.Controllers
 		private readonly UserManager<IdentityUser> _userManager;
 		private readonly RoleManager<IdentityRole> _roleManager;
 		private readonly SignInManager<IdentityUser> _signInManager;
+		private readonly ApplicationDbContext _context;
+		
 
-        public AccountController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager,SignInManager<IdentityUser> signInManager)
+        public AccountController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager,SignInManager<IdentityUser> signInManager,ApplicationDbContext context)
         {
             _userManager = userManager;
 			_signInManager = signInManager;
 			_roleManager = roleManager;
+			_context = context;
+			
         }
 
 		[AllowAnonymous]
@@ -32,10 +40,12 @@ namespace DynamicallyRole.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				
-				await _signInManager.PasswordSignInAsync(model.username, model.Password, model.RememberMe,lockoutOnFailure:false);
+                List<RoleViewModel> roleViewModels = new List<RoleViewModel>();
+
+                var result = await _signInManager.PasswordSignInAsync(model.username, model.Password, model.RememberMe,lockoutOnFailure:false);
 
 				
+
 
 				return RedirectToAction("Index","Home");
 			}

@@ -1,9 +1,59 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@using DynamicAuthorization.Mvc.Ui.ViewModels
+@using DynamicallyRole.Models.ViewModel
+@using DynamicallyRole.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Newtonsoft.Json
 
 
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
+@inject ApplicationDbContext _context
+@inject RoleManager<IdentityRole> RoleManager
 
+@{
+    if (SignInManager.IsSignedIn(User))
+    {
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null)
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            string roleId = string.Empty;
+
+            foreach (var role in roles)
+            {
+                roleId = await RoleManager.Roles
+                    .Where(r => r.Name == role)
+                    .Select(r => r.Id)
+                    .FirstOrDefaultAsync();
+            }
+
+            List<RoleAccess> accessList = new List<RoleAccess>();
+            if (!string.IsNullOrEmpty(roleId))
+            {
+                accessList = await _context.RoleAccess
+                    .Where(a => a.RoleId == roleId)
+                    .ToListAsync();
+            }
+
+            List<DynamicallyRole.Models.ViewModel.RoleViewModel> roleViewModels = new List<DynamicallyRole.Models.ViewModel.RoleViewModel>();
+
+            foreach (var access in accessList)
+            {
+                var controllerList = JsonConvert.DeserializeObject<List<ControllerViewModel>>(access.Access);
+                DynamicallyRole.Models.ViewModel.RoleViewModel roleViewModel = new DynamicallyRole.Models.ViewModel.RoleViewModel
+                        {
+                            Id = access.RoleId,
+                            Name = access.RoleId,
+                            DisplayName = null,
+                            Controllers = controllerList
+                        };
+                roleViewModels.Add(roleViewModel);
+            }
+            ViewData["RoleViewModels"] = roleViewModels;
+        }
+    }
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -26,48 +76,102 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        @if (SignInManager.IsSignedIn(User))
+                        @if (ViewData["RoleViewModels"] != null)
                         {
-                            @if (await UserManager.IsInRoleAsync(await UserManager.GetUserAsync(User), "Customer"))
+                            var roleViewModels = ViewData["RoleViewModels"] as List<DynamicallyRole.Models.ViewModel.RoleViewModel>;
+
+                            bool check = false;
+
+                                @foreach(var roleViewModel in roleViewModels)
+                                {
+                                    @foreach(var controller in roleViewModel.Controllers)
+                                    {
+                                        @if(controller.Name=="Home")
+                                        {
+                                            @foreach(var action in controller.Actions)
+                                        {
+                                            @if(action.Name=="Index")
+                                            {
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                                                </li>
+                                            }
+                                            @if(action.Name=="Privacy")
+                                            {
+                                                <li class="nav-item">
+                                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                                                </li>
+                                            }
+                                        }
+                                    }
+                                }
+                                }
+
+                            @foreach (var roleViewModel in roleViewModels)
+                            {
+                                @foreach (var controller in roleViewModel.Controllers)
+                                {
+                                    <li>
+                                        @if (controller.Name == "RoleController`2")
+                                        {
+                                            check = true;
+                                            break;
+                                        }
+                                        else
+                                        {
+
+                                            @if (controller.Name == "UserRoleController`3")
+                                            {
+                                                check = true;
+                                                break;
+                                            }
+                                        }
+                                    </li>
+                                }
+                            }
+                            if (check)
                             {
 
-                                
-                            }
-                            else
-                            {
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Access
                                     </a>
-                                    <ul class="dropdown-menu">
-                                        <secure-content asp-area="" asp-controller="Role" asp-action="Index">
-                                            <li class="nav-item">
-                                                <a class="nav-link text-dark" asp-area="" asp-controller="Role" asp-action="Index">Role</a>
-                                            </li>
-                                            <li>
-                                                <a class="nav-link text-dark" asp-controller="UserRole" asp-action="Index">User Role</a>
-                                            </li>
-                                        </secure-content>
+                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                        @foreach (var roleViewModel in roleViewModels)
+                                        {
+                                            @foreach (var controller in roleViewModel.Controllers)
+                                            {
+                                                <li>
+                                                    @if (controller.Name == "RoleController`2")
+                                                    {
+                                                        <a class="dropdown-item" asp-area="" asp-controller="Role" asp-action="Index">
+                                                            Role
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+
+                                                        @if (controller.Name == "UserRoleController`3")
+                                                        {
+                                                            <a class="dropdown-item" asp-area="" asp-controller="UserRole" asp-action="Index">
+                                                                User Role
+                                                            </a>
+                                                        }
+                                                    }
+                                                </li>
+                                            }
+                                        }
                                     </ul>
                                 </li>
                             }
                         }
-
-
-                       
                     </ul>
                     <partial name="L" />
-
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -79,6 +183,7 @@
             &copy; 2024 - NEXIUS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

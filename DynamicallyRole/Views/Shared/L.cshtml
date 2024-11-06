@@ -1,13 +1,13 @@
-﻿@using Microsoft.AspNetCore.Identity
-
+﻿@using DynamicallyRole.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 @inject RoleManager<IdentityRole> RoleManager
-
+@inject ApplicationDbContext _context
 
 <ul class="navbar-nav">
-
     @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">
@@ -16,19 +16,22 @@
         <form id="logoutForm" method="post" class="form-inline" asp-controller="Account" asp-action="LogOff">
             <button type="submit" class="btn nav-link">Logout</button>
         </form>
-        @if (await UserManager.IsInRoleAsync(await UserManager.GetUserAsync(User),"Admin"))
+
+
+        
+
+        @* Check if the user is in the "Admin" role and fetch the role ID *@
+        @if (await UserManager.IsInRoleAsync(await UserManager.GetUserAsync(User), "Admin"))
         {
             <li class="nav-item">
                 <a class="nav-link" asp-controller="Account" asp-action="Reg">Register</a>
             </li>
+
+            
         }
-
-
-
     }
     else
     {
-        
         <li class="nav-item">
             <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
         </li>

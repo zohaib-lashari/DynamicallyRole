@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using DynamicallyRole.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicallyRole.Data
@@ -9,5 +10,6 @@ namespace DynamicallyRole.Data
         {
             
         }
+        public DbSet<RoleAccess> RoleAccess { get; set; }
     }
 }
